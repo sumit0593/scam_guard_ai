@@ -1,37 +1,82 @@
+# imports and setup
+# 1. Setup and Config
 from google import genai
 from google.genai import types
-from pydantic import BaseModel
+import json
+import re
 import os
-from dotenv import load_dotenv  # Import this
-
-# Load environment variables from the .env file
+from dotenv import load_dotenv
 load_dotenv()
 
-# --- API KEY CONFIGURATION ---
+# 2. create client
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL_NAME = "gemini-2.5-flash-lite"
+# print(GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
+# 3. create prompt template - ReAct
+PROMPT_TEMPLATE = """
+You are a highly reliable and safety-focused AI system trained to identify potentially scammy messages.
 
-# 1. Get the API Key
-api_key = os.environ.get("GEMINI_API_KEY")
+Follow this exact structured reasoning format:
+1. **Thought**: Analyze the tone, urgency, and patterns.
+2. **Action**: Classify if this is likely a scam.
+3. **Final Answer**: Output a structured JSON.
 
-# Optional: Get model from env, or default to a string
-model_name = os.environ.get("model", "gemini-2.0-flash-exp")
+Return response only in this JSON format:
+```
+    {{
+    "label": "Scam | Not Scam | Uncertain",
+    "reasoning": "Your step-by-step analysis",
+    "intent": "Sender's intent behind the message",
+    "risk_factors": ["List of red flags like urgency, bad links, etc."]
+    }}
+```
+User Message:
+{}
+"""
 
-# Debug print (you can remove this later)
-print(f"Debug - Key found: {'Yes' if api_key else 'No'}")
-print(f"Debug - Model: {model_name}")
+# 4. handle input
+# user_input = input("Enter the text message to analyze: ")
+user_input = "Your package delivery failed. Please update your address at [www.bestwebsite.com] to avoid return to sender."
+# print(user_input)
 
-if not api_key:
-    print("Error: API Key not found. Check your .env file.")
+full_prompt = PROMPT_TEMPLATE.format(user_input)
+# print(full_prompt)
 
+# 5. generate response with llm
+response = client.models.generate_content(
+    model=GEMINI_MODEL_NAME,
+    contents=full_prompt
+)
+# print(response.text)
 
-def load_system_prompt(filename="prompt.txt"):
+# 6. handle output
+def extract_json(text):
+    """
+    Finds the first '{' and the last '}' in a string 
+    and parses it as JSON.
+    """
     try:
-        with open(filename, "r", encoding="utf-8") as f:
-            print(f"Debug - Loaded system prompt from {filename}")
-            return f.read()
-    except FileNotFoundError:
-        print(f"Error: {filename} not found.")
-        return "You are a helpful assistant."  # Fallback prompt
+        # Regex to find the JSON block inside the text
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            return json.loads(match.group())
+    except Exception as e:
+        print(f"JSON Parsing Error: {e}")
+    
+    # Fallback if parsing fails
+    return {
+        "label": "Uncertain", 
+        "reasoning": "Could not parse AI response",
+        "intent": "Unknown",
+        "risk_factors": ["Parsing Error"]
+    }
 
+parsed_output = extract_json(response.text)
+print("="*40)
+print(parsed_output)
+print(type(parsed_output))
+print("="*40)
 
-prompt = load_system_prompt()
+# print(json.dumps(parsed_output, indent=4))
