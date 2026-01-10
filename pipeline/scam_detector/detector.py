@@ -8,6 +8,7 @@ from utils import get_logger
 # logger
 logger = get_logger(__name__)
 
+
 # scam detection class
 class ScamDetector:
     """
@@ -32,7 +33,7 @@ class ScamDetector:
             prompt = build_prompt(message, self.strategy)
             raw_response = self.executor.execute(prompt)
             parsed_result = self.parser.parse_llm_output(raw_response)
-            
+
             logger.info(f"Detection successful!")
             return parsed_result
 

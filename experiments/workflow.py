@@ -6,6 +6,7 @@ import json
 import re
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # 2. create client
@@ -45,16 +46,14 @@ full_prompt = PROMPT_TEMPLATE.format(user_input)
 # print(full_prompt)
 
 # 5. generate response with llm
-response = client.models.generate_content(
-    model=GEMINI_MODEL_NAME,
-    contents=full_prompt
-)
+response = client.models.generate_content(model=GEMINI_MODEL_NAME, contents=full_prompt)
 # print(response.text)
+
 
 # 6. handle output
 def extract_json(text):
     """
-    Finds the first '{' and the last '}' in a string 
+    Finds the first '{' and the last '}' in a string
     and parses it as JSON.
     """
     try:
@@ -64,19 +63,20 @@ def extract_json(text):
             return json.loads(match.group())
     except Exception as e:
         print(f"JSON Parsing Error: {e}")
-    
+
     # Fallback if parsing fails
     return {
-        "label": "Uncertain", 
+        "label": "Uncertain",
         "reasoning": "Could not parse AI response",
         "intent": "Unknown",
-        "risk_factors": ["Parsing Error"]
+        "risk_factors": ["Parsing Error"],
     }
 
+
 parsed_output = extract_json(response.text)
-print("="*40)
+print("=" * 40)
 print(parsed_output)
 print(type(parsed_output))
-print("="*40)
+print("=" * 40)
 
 # print(json.dumps(parsed_output, indent=4))

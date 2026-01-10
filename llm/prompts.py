@@ -2,18 +2,14 @@ from pathlib import Path
 from utils import load_file
 
 
-PROMPTS_DIR = Path(__file__).parent / "prompts"
+PROMPTS_DIR = Path(__file__).parent / "prompt"
 
 
 def load_prompt(filename: str) -> str:
     """
-    Docstring for load_prompt
-
-    :param filename: Description
-    :type filename: str
-    :return: Description
-    :rtype: str
+    Load prompt from the prompts directory.
     """
+    print(PROMPTS_DIR)
     return load_file(PROMPTS_DIR / filename)
 
 
@@ -22,12 +18,7 @@ PROMPT = load_prompt("react.md")
 
 def generate_prompt(user_input: str) -> str:
     """
-    Docstring for generate_prompt
-
-    :param user_input: Description
-    :type user_input: str
-    :return: Description
-    :rtype: str
+    Generate a prompt for scam detection.
     """
     template = PROMPT
     return f"{template}\n\nUser Message:\n{user_input.strip()}"
